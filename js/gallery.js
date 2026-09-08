@@ -4,13 +4,14 @@ class Gallery {
         this.viewport = document.querySelector('.gallery-viewport');
         this.cards = [];
         this.activeCard = null;
+        this.scrollProgress = 0;
         this.init();
     }
 
     init() {
         this.createCards();
-        this.setupScrollAnimation();
         this.setupCardPositioning();
+        this.setupScrollAnimation();
     }
 
     createCards() {
@@ -49,65 +50,78 @@ class Gallery {
         return card;
     }
 
+    setupCardPositioning() {
+        // Position cards in a circular/spread pattern around the center
+        const viewport = this.viewport;
+        const viewportWidth = viewport.clientWidth || window.innerWidth;
+        const viewportHeight = viewport.clientHeight || window.innerHeight;
+
+        const centerX = viewportWidth / 2;
+        const centerY = viewportHeight / 2;
+        const radius = 300;
+
+        this.cards.forEach((card, index) => {
+            // Arrange cards in a circle pattern
+            const angle = (index / this.cards.length) * Math.PI * 2;
+            const x = centerX + Math.cos(angle) * radius - 200; // 200 is half card width
+            const y = centerY + Math.sin(angle) * radius - 250; // 250 is half card height
+
+            gsap.set(card, {
+                position: 'absolute',
+                left: x,
+                top: y,
+                x: 0,
+                y: 0,
+                z: index * 50,
+                rotationZ: angle * (180 / Math.PI),
+                rotationX: 0,
+                rotationY: 0,
+                opacity: 1
+            });
+
+            // Store initial position for scroll animation
+            card.dataset.initialZ = index * 50;
+            card.dataset.angle = angle;
+        });
+    }
+
     setupScrollAnimation() {
+        // Register ScrollTrigger with GSAP
+        gsap.registerPlugin(ScrollTrigger);
+
         const tl = gsap.timeline({
             scrollTrigger: {
                 trigger: '.gallery-section',
-                start: 'top top',
-                end: 'bottom top',
-                scrub: 1,
+                start: 'top center',
+                end: 'bottom center',
+                scrub: 0.6,
+                onUpdate: (self) => {
+                    this.scrollProgress = self.getProgress();
+                },
                 markers: false
             }
         });
 
-        // Animate cards coming from center and moving back
+        // Animate all cards through Z-axis as user scrolls
         this.cards.forEach((card, index) => {
+            const initialZ = parseInt(card.dataset.initialZ);
+            const angle = parseFloat(card.dataset.angle);
+
             tl.to(card, {
-                z: -500 - index * 100,
+                z: initialZ - 1000 - index * 100,
+                rotationX: 0,
+                rotationY: 0,
                 opacity: 1,
                 duration: 1,
                 ease: 'none'
             }, 0);
 
-            // Scale animation
+            // Subtle scale effect
             tl.to(card, {
-                scale: 1 - index * 0.05,
+                scale: 1 - (index * 0.08),
                 duration: 1,
                 ease: 'none'
             }, 0);
-        });
-    }
-
-    setupCardPositioning() {
-        // Position cards in a spread pattern across the screen
-        const viewport = this.viewport;
-        const viewportWidth = viewport.clientWidth || window.innerWidth;
-        const viewportHeight = viewport.clientHeight || window.innerHeight;
-
-        this.cards.forEach((card, index) => {
-            // Spread cards across the viewport in a grid-like pattern
-            const cols = 3;
-            const rows = Math.ceil(this.cards.length / cols);
-            
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            
-            const cardWidth = 400;
-            const cardHeight = 500;
-            
-            const startX = (viewportWidth / cols) * col + (viewportWidth / cols / 2) - cardWidth / 2;
-            const startY = (viewportHeight / rows) * row + (viewportHeight / rows / 2) - cardHeight / 2;
-
-            gsap.set(card, {
-                position: 'absolute',
-                left: startX,
-                top: startY,
-                x: 0,
-                y: 0,
-                z: 100 + index * 50,
-                rotationZ: (Math.random() - 0.5) * 10,
-                opacity: 1
-            });
         });
     }
 
@@ -131,7 +145,7 @@ class Gallery {
 
         // Bring card to front
         gsap.to(card, {
-            z: 1000,
+            z: 5000,
             duration: 0.5,
             ease: 'power2.out'
         });
@@ -188,5 +202,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const gallery = new Gallery();
         window.gallery = gallery; // Make globally accessible
-    }, 50);
+    }, 100);
 });
