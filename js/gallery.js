@@ -62,8 +62,6 @@ class Gallery {
 
         // Animate cards coming from center and moving back
         this.cards.forEach((card, index) => {
-            const startPosition = 100 + index * 15; // Staggered starting positions
-
             tl.to(card, {
                 z: -500 - index * 100,
                 opacity: 1,
@@ -81,33 +79,48 @@ class Gallery {
     }
 
     setupCardPositioning() {
-        // Position cards in a circular arrangement around the center
-        const centerX = this.viewport.clientWidth / 2;
-        const centerY = this.viewport.clientHeight / 2;
+        // Position cards in a spread pattern across the screen
+        const viewport = this.viewport;
+        const viewportWidth = viewport.clientWidth || window.innerWidth;
+        const viewportHeight = viewport.clientHeight || window.innerHeight;
 
         this.cards.forEach((card, index) => {
-            const angle = (index / this.cards.length) * Math.PI * 2;
-            const radius = 300;
-
-            const x = centerX + Math.cos(angle) * radius - card.offsetWidth / 2;
-            const y = centerY + Math.sin(angle) * radius - card.offsetHeight / 2;
+            // Spread cards across the viewport in a grid-like pattern
+            const cols = 3;
+            const rows = Math.ceil(this.cards.length / cols);
+            
+            const col = index % cols;
+            const row = Math.floor(index / cols);
+            
+            const cardWidth = 400;
+            const cardHeight = 500;
+            
+            const startX = (viewportWidth / cols) * col + (viewportWidth / cols / 2) - cardWidth / 2;
+            const startY = (viewportHeight / rows) * row + (viewportHeight / rows / 2) - cardHeight / 2;
 
             gsap.set(card, {
-                x: x,
-                y: y,
+                position: 'absolute',
+                left: startX,
+                top: startY,
+                x: 0,
+                y: 0,
                 z: 100 + index * 50,
-                rotationZ: (Math.random() - 0.5) * 10
+                rotationZ: (Math.random() - 0.5) * 10,
+                opacity: 1
             });
         });
     }
 
     selectCard(card, event) {
-        if (event.target.classList.contains('control-btn')) {
-            const btn = event.target;
-            if (btn.title === 'Info') {
-                this.showInfo(card);
-            } else if (btn.title === 'Delete') {
-                this.deleteCard(card);
+        // Don't select if clicking a control button
+        if (event.target.closest('.control-btn')) {
+            const btn = event.target.closest('.control-btn');
+            if (btn) {
+                if (btn.title === 'Info') {
+                    this.showInfo(card);
+                } else if (btn.title === 'Delete') {
+                    this.deleteCard(card);
+                }
             }
             return;
         }
@@ -129,14 +142,18 @@ class Gallery {
         const panel = document.querySelector('.info-panel');
         const panelContent = document.querySelector('#element-info');
 
-        panelContent.innerHTML = `
-            <strong>${project.title}</strong><br><br>
-            ${project.details}<br><br>
-            <strong>Status:</strong> Active<br>
-            <strong>ID:</strong> ${project.id}
-        `;
+        if (panelContent && project) {
+            panelContent.innerHTML = `
+                <strong>${project.title}</strong><br><br>
+                ${project.details}<br><br>
+                <strong>Status:</strong> Active<br>
+                <strong>ID:</strong> ${project.id}
+            `;
+        }
 
-        panel.classList.add('active');
+        if (panel) {
+            panel.classList.add('active');
+        }
     }
 
     deleteCard(card) {
@@ -168,6 +185,8 @@ class Gallery {
 
 // Initialize gallery when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const gallery = new Gallery();
-    window.gallery = gallery; // Make globally accessible
+    setTimeout(() => {
+        const gallery = new Gallery();
+        window.gallery = gallery; // Make globally accessible
+    }, 50);
 });
