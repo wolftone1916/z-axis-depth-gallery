@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z-Axis Depth Gallery - Iron Man Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Hero/Landing Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Z-Axis Gallery</h1>
+            <p>Scroll to explore. Drag to interact. Push to the background.</p>
+            <div class="scroll-hint">
+                <span>↓ Scroll Down ↓</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D Gallery Container -->
+    <section class="gallery-section">
+        <div class="perspective-container">
+            <div class="gallery-viewport">
+                <!-- Project Cards will be generated here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Info Panel (Iron Man Style) -->
+    <div class="info-panel">
+        <div class="panel-header">
+            <h3>ACTIVE ELEMENT</h3>
+            <button class="close-btn">✕</button>
+        </div>
+        <div class="panel-content">
+            <p id="element-info">Select a project card to view details</p>
+        </div>
+    </div>
+
+    <!-- Instructions Overlay -->
+    <div class="instructions-overlay">
+        <div class="instructions-card">
+            <h2>Navigation Guide</h2>
+            <ul>
+                <li><strong>Scroll:</strong> Move through depth (Z-axis)</li>
+                <li><strong>Drag:</strong> Move cards around the screen</li>
+                <li><strong>Scroll Wheel (on card):</strong> Scale up/down</li>
+                <li><strong>Right Click:</strong> Push to background</li>
+                <li><strong>Click Card:</strong> View details</li>
+            </ul>
+            <button class="close-instructions">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/gallery.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/animations.js"></script>
+</body>
+</html>
