@@ -7,33 +7,7 @@ class AnimationManager {
     }
 
     init() {
-        this.setupParallaxEffect();
         this.setupHoverEffects();
-        this.setupCardEntrance();
-    }
-
-    setupParallaxEffect() {
-        // Add subtle parallax movement based on mouse position
-        document.addEventListener('mousemove', (e) => {
-            const cards = document.querySelectorAll('.project-card');
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-
-            cards.forEach((card) => {
-                if (document.querySelector('.instructions-overlay').classList.contains('hidden')) {
-                    const moveX = (e.clientX - centerX) * 0.01;
-                    const moveY = (e.clientY - centerY) * 0.01;
-
-                    gsap.to(card, {
-                        rotationY: moveX * 5,
-                        rotationX: -moveY * 5,
-                        duration: 0.5,
-                        ease: 'power1.out',
-                        overwrite: 'auto'
-                    });
-                }
-            });
-        });
     }
 
     setupHoverEffects() {
@@ -76,29 +50,8 @@ class AnimationManager {
         });
     }
 
-    setupCardEntrance() {
-        const cards = document.querySelectorAll('.project-card');
-
-        cards.forEach((card, index) => {
-            gsap.from(card, {
-                opacity: 0,
-                scale: 0,
-                z: -1000,
-                duration: 0.8,
-                delay: index * 0.1,
-                ease: 'back.out(1.7)',
-                scrollTrigger: {
-                    trigger: '.gallery-section',
-                    start: 'top 80%'
-                }
-            });
-        });
-    }
-
     // Advanced focus effect when card is selected
     static focusCard(card) {
-        const perspective = card.closest('.gallery-viewport');
-
         gsap.to(card, {
             boxShadow: '0 0 100px rgba(0, 229, 255, 1)',
             filter: 'brightness(1.2)',
