@@ -78,14 +78,14 @@ class Gallery {
                 top: startY,
                 x: 0,
                 y: 0,
-                z: 0,
+                z: -2000 - index * 80,
                 rotationZ: 0,
-                scale: 1,
-                opacity: 1
+                scale: 0.3,
+                opacity: 0.6
             });
 
-            card.dataset.initialZ = 0;
-            card.dataset.initialScale = 1;
+            card.dataset.initialZ = -2000 - index * 80;
+            card.dataset.initialScale = 0.3;
         });
     }
 
@@ -99,14 +99,17 @@ class Gallery {
             this.scrollProgress = scrollProgress;
 
             this.cards.forEach((card, index) => {
-                // REVERSED: Cards move TOWARDS screen as you scroll down
-                const zValue = scrollProgress * 1000 + index * 80;
-                const scaleValue = 1 + (scrollProgress * 0.3) + (index * 0.06);
+                // Cards start far away and small, move toward screen and grow
+                // Then pass through screen as they zoom in enough
+                const initialZ = -2000 - index * 80;
+                const zValue = initialZ + scrollProgress * 3500;
+                const scaleValue = 0.3 + scrollProgress * 1.8;
+                const opacityValue = Math.max(0.4, 1 - scrollProgress * 0.2);
 
                 gsap.set(card, {
                     z: zValue,
-                    scale: Math.max(0.4, Math.min(2, scaleValue)),
-                    opacity: Math.max(0.5, 1 - scrollProgress * 0.1)
+                    scale: scaleValue,
+                    opacity: opacityValue
                 });
             });
         });
