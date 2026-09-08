@@ -1,11 +1,10 @@
-// Interactive Drag and Manipulation System (Iron Man Style)
+// Interactive Drag and Manipulation System
 class InteractionManager {
     constructor() {
         this.draggedCard = null;
         this.isDragging = false;
         this.startX = 0;
         this.startY = 0;
-        this.startZ = 0;
         this.offsetX = 0;
         this.offsetY = 0;
 
@@ -37,7 +36,7 @@ class InteractionManager {
         this.startX = e.clientX;
         this.startY = e.clientY;
 
-        // Get current position from the card's style
+        // Get current position
         const rect = card.getBoundingClientRect();
         this.offsetX = rect.left;
         this.offsetY = rect.top;
@@ -45,7 +44,7 @@ class InteractionManager {
         card.classList.add('dragging');
         card.style.cursor = 'grabbing';
 
-        // Kill any existing tweens on this card
+        // Kill any existing tweens
         gsap.killTweensOf(card);
 
         e.preventDefault();
@@ -60,7 +59,6 @@ class InteractionManager {
         const newX = this.offsetX + deltaX;
         const newY = this.offsetY + deltaY;
 
-        // Use left/top positioning instead of transform
         this.draggedCard.style.position = 'absolute';
         this.draggedCard.style.left = newX + 'px';
         this.draggedCard.style.top = newY + 'px';
@@ -72,7 +70,6 @@ class InteractionManager {
         this.draggedCard.classList.remove('dragging');
         this.draggedCard.style.cursor = 'grab';
 
-        // Snap to grid
         this.snapToGrid(this.draggedCard);
 
         this.isDragging = false;
@@ -87,10 +84,10 @@ class InteractionManager {
             e.preventDefault();
 
             const scaleAmount = e.deltaY > 0 ? 0.9 : 1.1;
-            const currentScale = parseFloat(card.dataset.scale) || 1;
+            const currentScale = parseFloat(card.dataset.currentScale) || 1;
             const newScale = Math.max(0.5, Math.min(3, currentScale * scaleAmount));
 
-            card.dataset.scale = newScale;
+            card.dataset.currentScale = newScale;
 
             gsap.to(card, {
                 scale: newScale,
@@ -170,7 +167,6 @@ class KeyboardManager {
             case 'z':
             case 'Z':
                 if (e.ctrlKey && activeCard) {
-                    // Send to background
                     gsap.to(activeCard, {
                         z: -5000,
                         duration: 0.8,
@@ -182,7 +178,6 @@ class KeyboardManager {
             case 'b':
             case 'B':
                 if (e.ctrlKey && activeCard) {
-                    // Bring to front
                     gsap.to(activeCard, {
                         z: 1000,
                         duration: 0.5,
@@ -194,7 +189,6 @@ class KeyboardManager {
             case 'r':
             case 'R':
                 if (e.ctrlKey && activeCard) {
-                    // Reset position and rotation
                     gsap.to(activeCard, {
                         left: window.innerWidth / 2 - activeCard.offsetWidth / 2 + 'px',
                         top: window.innerHeight / 2 - activeCard.offsetHeight / 2 + 'px',
@@ -209,9 +203,8 @@ class KeyboardManager {
     }
 }
 
-// Initialize interaction managers when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for gallery to initialize
     setTimeout(() => {
         const interactionManager = new InteractionManager();
         const keyboardManager = new KeyboardManager();
