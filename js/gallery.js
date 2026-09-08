@@ -43,7 +43,7 @@ class Gallery {
             </div>
         `;
 
-        // Add event listeners
+        // Add event listeners BEFORE positioning
         card.addEventListener('click', (e) => this.selectCard(card, e));
         card.addEventListener('contextmenu', (e) => this.sendToBackground(card, e));
 
@@ -51,7 +51,7 @@ class Gallery {
     }
 
     setupCardPositioning() {
-        // Position cards in a spread pattern - larger area to avoid clustering
+        // Position cards in a spread pattern
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
@@ -59,7 +59,6 @@ class Gallery {
         const centerY = viewportHeight / 2;
 
         this.cards.forEach((card, index) => {
-            // Create a more spread out grid
             const cols = 3;
             const rows = Math.ceil(this.cards.length / cols);
             
@@ -81,39 +80,34 @@ class Gallery {
                 y: 0,
                 z: 0,
                 rotationZ: 0,
-                rotationX: 0,
-                rotationY: 0,
                 scale: 1,
                 opacity: 1
             });
 
-            // Store initial state
             card.dataset.initialZ = 0;
             card.dataset.initialScale = 1;
         });
     }
 
     setupScrollAnimation() {
-        // Make sure ScrollTrigger is registered
-        gsap.registerPlugin(ScrollTrigger);
+        // Use direct scroll listener for Z-axis movement
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
 
-        // Create scroll-driven animation
-        gsap.utils.toArray('.project-card').forEach((card, index) => {
-            gsap.to(card, {
-                scrollTrigger: {
-                    trigger: '.gallery-section',
-                    start: 'top center',
-                    end: 'bottom center',
-                    scrub: 0.8,
-                    onUpdate: (self) => {
-                        this.scrollProgress = self.getProgress();
-                    }
-                },
-                z: -800 - index * 80,
-                scale: 1 - (index * 0.06),
-                opacity: 1,
-                duration: 0,
-                ease: 'none'
+            this.scrollProgress = scrollProgress;
+
+            this.cards.forEach((card, index) => {
+                // Move cards through Z-axis based on scroll
+                const zValue = scrollProgress * -1000 - index * 80;
+                const scaleValue = 1 - (scrollProgress * 0.3) - (index * 0.06);
+
+                gsap.set(card, {
+                    z: zValue,
+                    scale: Math.max(0.4, scaleValue),
+                    opacity: Math.max(0.5, 1 - scrollProgress * 0.3)
+                });
             });
         });
     }
@@ -136,7 +130,6 @@ class Gallery {
         this.cards.forEach(c => c.classList.remove('active'));
         card.classList.add('active');
 
-        // Bring card to front
         gsap.to(card, {
             z: 5000,
             duration: 0.5,
