@@ -99,14 +99,14 @@ class Gallery {
             this.scrollProgress = scrollProgress;
 
             this.cards.forEach((card, index) => {
-                // Move cards through Z-axis based on scroll
-                const zValue = scrollProgress * -1000 - index * 80;
-                const scaleValue = 1 - (scrollProgress * 0.3) - (index * 0.06);
+                // REVERSED: Cards move TOWARDS screen as you scroll down
+                const zValue = scrollProgress * 1000 + index * 80;
+                const scaleValue = 1 + (scrollProgress * 0.3) + (index * 0.06);
 
                 gsap.set(card, {
                     z: zValue,
-                    scale: Math.max(0.4, scaleValue),
-                    opacity: Math.max(0.5, 1 - scrollProgress * 0.3)
+                    scale: Math.max(0.4, Math.min(2, scaleValue)),
+                    opacity: Math.max(0.5, 1 - scrollProgress * 0.1)
                 });
             });
         });
