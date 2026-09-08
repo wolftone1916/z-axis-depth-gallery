@@ -84,7 +84,6 @@ body {
 .gallery-section {
     height: 200vh;
     position: relative;
-    perspective: 1200px;
     margin-top: 2rem;
 }
 
@@ -95,6 +94,7 @@ body {
     width: 100%;
     overflow: hidden;
     background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+    perspective: 1200px;
 }
 
 .gallery-viewport {
@@ -116,7 +116,6 @@ body {
     padding: 2rem;
     cursor: grab;
     transform-style: preserve-3d;
-    transition: box-shadow 0.3s ease;
     box-shadow: 0 0 30px rgba(0, 188, 212, 0.2);
     overflow: hidden;
     will-change: transform;
@@ -409,14 +408,4 @@ body {
         margin: 1rem;
         padding: 1.5rem;
     }
-}
-
-/* Loading Animation */
-@keyframes cardFloat {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-}
-
-.project-card {
-    animation: cardFloat 3s ease-in-out infinite;
 }
