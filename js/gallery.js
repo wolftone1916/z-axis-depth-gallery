@@ -51,7 +51,7 @@ class Gallery {
     }
 
     setupCardPositioning() {
-        // Position cards in a spread pattern
+        // Position cards centered
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
@@ -59,18 +59,11 @@ class Gallery {
         const centerY = viewportHeight / 2;
 
         this.cards.forEach((card, index) => {
-            const cols = 3;
-            const rows = Math.ceil(this.cards.length / cols);
-            
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            
             const cardWidth = 300;
             const cardHeight = 380;
             
-            const spacing = 450;
-            const startX = centerX - (cols / 2) * spacing + col * spacing - cardWidth / 2;
-            const startY = centerY - (rows / 2) * spacing + row * spacing - cardHeight / 2;
+            const startX = centerX - cardWidth / 2;
+            const startY = centerY - cardHeight / 2;
 
             gsap.set(card, {
                 position: 'absolute',
@@ -78,14 +71,13 @@ class Gallery {
                 top: startY,
                 x: 0,
                 y: 0,
-                z: -2000 - index * 80,
+                z: -3000 - index * 500,
                 rotationZ: 0,
-                scale: 0.3,
-                opacity: 0.6
+                scale: 0.2 + index * 0.05,
+                opacity: 0.5
             });
 
-            card.dataset.initialZ = -2000 - index * 80;
-            card.dataset.initialScale = 0.3;
+            card.dataset.cardIndex = index;
         });
     }
 
@@ -98,13 +90,33 @@ class Gallery {
 
             this.scrollProgress = scrollProgress;
 
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const centerX = viewportWidth / 2;
+            const centerY = viewportHeight / 2;
+
             this.cards.forEach((card, index) => {
-                // Cards start far away and small, move toward screen and grow
-                // Then pass through screen as they zoom in enough
-                const initialZ = -2000 - index * 80;
-                const zValue = initialZ + scrollProgress * 3500;
-                const scaleValue = 0.3 + scrollProgress * 1.8;
-                const opacityValue = Math.max(0.4, 1 - scrollProgress * 0.2);
+                // Each card has its own scroll window - staggered appearance
+                const cardStartScroll = index * (1 / this.cards.length);
+                const cardScrollRange = 1 / this.cards.length;
+                
+                let cardProgress = 0;
+                if (scrollProgress >= cardStartScroll) {
+                    cardProgress = Math.min(1, (scrollProgress - cardStartScroll) / cardScrollRange);
+                }
+
+                // Card starts far away and small, scales up as it comes closer
+                const initialZ = -3000 - index * 500;
+                const zValue = initialZ + cardProgress * 4000;
+                const scaleValue = 0.2 + index * 0.05 + cardProgress * 0.8;
+                
+                // Opacity: fade in, peak at middle, fade out
+                let opacityValue = 0.5;
+                if (cardProgress < 0.5) {
+                    opacityValue = 0.5 + cardProgress;
+                } else {
+                    opacityValue = 1.5 - cardProgress;
+                }
 
                 gsap.set(card, {
                     z: zValue,
