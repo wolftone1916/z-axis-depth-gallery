@@ -51,77 +51,70 @@ class Gallery {
     }
 
     setupCardPositioning() {
-        // Position cards in a circular/spread pattern around the center
-        const viewport = this.viewport;
-        const viewportWidth = viewport.clientWidth || window.innerWidth;
-        const viewportHeight = viewport.clientHeight || window.innerHeight;
+        // Position cards in a spread pattern - larger area to avoid clustering
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
 
         const centerX = viewportWidth / 2;
         const centerY = viewportHeight / 2;
-        const radius = 300;
 
         this.cards.forEach((card, index) => {
-            // Arrange cards in a circle pattern
-            const angle = (index / this.cards.length) * Math.PI * 2;
-            const x = centerX + Math.cos(angle) * radius - 200; // 200 is half card width
-            const y = centerY + Math.sin(angle) * radius - 250; // 250 is half card height
+            // Create a more spread out grid
+            const cols = 3;
+            const rows = Math.ceil(this.cards.length / cols);
+            
+            const col = index % cols;
+            const row = Math.floor(index / cols);
+            
+            const cardWidth = 300;
+            const cardHeight = 380;
+            
+            const spacing = 450;
+            const startX = centerX - (cols / 2) * spacing + col * spacing - cardWidth / 2;
+            const startY = centerY - (rows / 2) * spacing + row * spacing - cardHeight / 2;
 
             gsap.set(card, {
                 position: 'absolute',
-                left: x,
-                top: y,
+                left: startX,
+                top: startY,
                 x: 0,
                 y: 0,
-                z: index * 50,
-                rotationZ: angle * (180 / Math.PI),
+                z: 0,
+                rotationZ: 0,
                 rotationX: 0,
                 rotationY: 0,
+                scale: 1,
                 opacity: 1
             });
 
-            // Store initial position for scroll animation
-            card.dataset.initialZ = index * 50;
-            card.dataset.angle = angle;
+            // Store initial state
+            card.dataset.initialZ = 0;
+            card.dataset.initialScale = 1;
         });
     }
 
     setupScrollAnimation() {
-        // Register ScrollTrigger with GSAP
+        // Make sure ScrollTrigger is registered
         gsap.registerPlugin(ScrollTrigger);
 
-        const tl = gsap.timeline({
-            scrollTrigger: {
-                trigger: '.gallery-section',
-                start: 'top center',
-                end: 'bottom center',
-                scrub: 0.6,
-                onUpdate: (self) => {
-                    this.scrollProgress = self.getProgress();
+        // Create scroll-driven animation
+        gsap.utils.toArray('.project-card').forEach((card, index) => {
+            gsap.to(card, {
+                scrollTrigger: {
+                    trigger: '.gallery-section',
+                    start: 'top center',
+                    end: 'bottom center',
+                    scrub: 0.8,
+                    onUpdate: (self) => {
+                        this.scrollProgress = self.getProgress();
+                    }
                 },
-                markers: false
-            }
-        });
-
-        // Animate all cards through Z-axis as user scrolls
-        this.cards.forEach((card, index) => {
-            const initialZ = parseInt(card.dataset.initialZ);
-            const angle = parseFloat(card.dataset.angle);
-
-            tl.to(card, {
-                z: initialZ - 1000 - index * 100,
-                rotationX: 0,
-                rotationY: 0,
+                z: -800 - index * 80,
+                scale: 1 - (index * 0.06),
                 opacity: 1,
-                duration: 1,
+                duration: 0,
                 ease: 'none'
-            }, 0);
-
-            // Subtle scale effect
-            tl.to(card, {
-                scale: 1 - (index * 0.08),
-                duration: 1,
-                ease: 'none'
-            }, 0);
+            });
         });
     }
 
@@ -201,6 +194,6 @@ class Gallery {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const gallery = new Gallery();
-        window.gallery = gallery; // Make globally accessible
+        window.gallery = gallery;
     }, 100);
 });
