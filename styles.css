@@ -119,6 +119,7 @@ body {
     transition: box-shadow 0.3s ease;
     box-shadow: 0 0 30px rgba(0, 188, 212, 0.2);
     overflow: hidden;
+    will-change: transform;
 }
 
 .project-card:hover {
@@ -129,7 +130,13 @@ body {
 .project-card.active {
     box-shadow: 0 0 60px rgba(0, 188, 212, 0.8);
     border-color: #00e5ff;
-    z-index: 1000;
+    z-index: 1000 !important;
+}
+
+.project-card.dragging {
+    cursor: grabbing;
+    z-index: 2000 !important;
+    box-shadow: 0 0 80px rgba(0, 188, 212, 1);
 }
 
 .project-card::before {
@@ -227,11 +234,16 @@ body {
     color: #00bcd4;
     font-size: 0.9rem;
     transition: all 0.3s ease;
+    padding: 0;
 }
 
 .control-btn:hover {
     background: rgba(0, 188, 212, 0.4);
     box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
 }
 
 /* Info Panel (Iron Man Style) */
@@ -278,6 +290,7 @@ body {
     cursor: pointer;
     font-size: 1.5rem;
     transition: all 0.3s ease;
+    padding: 0;
 }
 
 .close-btn:hover {
@@ -368,12 +381,6 @@ body {
 .close-instructions:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 20px rgba(0, 188, 212, 0.4);
-}
-
-/* Drag Handling */
-.project-card.dragging {
-    cursor: grabbing;
-    z-index: 2000;
 }
 
 /* Responsive Design */
