@@ -26,7 +26,10 @@ class InteractionManager {
 
     handleMouseDown(e) {
         const card = e.target.closest('.project-card');
-        if (!card || e.target.closest('.control-btn')) return;
+        if (!card) return;
+
+        // Don't drag if clicking a control button
+        if (e.target.closest('.control-btn')) return;
 
         this.draggedCard = card;
         this.isDragging = true;
@@ -34,17 +37,18 @@ class InteractionManager {
         this.startX = e.clientX;
         this.startY = e.clientY;
 
-        // Get current transform values
-        const transform = window.getComputedStyle(card).transform;
-        const matrix = new DOMMatrix(transform);
-        this.startZ = matrix.m43 || 0;
-
-        this.offsetX = parseInt(card.style.left || 0);
-        this.offsetY = parseInt(card.style.top || 0);
+        // Get current position from the card's style
+        const rect = card.getBoundingClientRect();
+        this.offsetX = rect.left;
+        this.offsetY = rect.top;
 
         card.classList.add('dragging');
+        card.style.cursor = 'grabbing';
 
+        // Kill any existing tweens on this card
         gsap.killTweensOf(card);
+
+        e.preventDefault();
     }
 
     handleMouseMove(e) {
@@ -56,22 +60,19 @@ class InteractionManager {
         const newX = this.offsetX + deltaX;
         const newY = this.offsetY + deltaY;
 
-        gsap.set(this.draggedCard, {
-            x: newX,
-            y: newY,
-            duration: 0
-        });
-
-        // Update visual feedback
-        this.updateDragIndicator(e.clientX, e.clientY);
+        // Use left/top positioning instead of transform
+        this.draggedCard.style.position = 'absolute';
+        this.draggedCard.style.left = newX + 'px';
+        this.draggedCard.style.top = newY + 'px';
     }
 
     handleMouseUp(e) {
         if (!this.draggedCard) return;
 
         this.draggedCard.classList.remove('dragging');
+        this.draggedCard.style.cursor = 'grab';
 
-        // Snap to grid or boundary
+        // Snap to grid
         this.snapToGrid(this.draggedCard);
 
         this.isDragging = false;
@@ -86,7 +87,7 @@ class InteractionManager {
             e.preventDefault();
 
             const scaleAmount = e.deltaY > 0 ? 0.9 : 1.1;
-            const currentScale = card.dataset.scale || 1;
+            const currentScale = parseFloat(card.dataset.scale) || 1;
             const newScale = Math.max(0.5, Math.min(3, currentScale * scaleAmount));
 
             card.dataset.scale = newScale;
@@ -101,33 +102,35 @@ class InteractionManager {
 
     setupUIListeners() {
         // Close info panel
-        document.querySelector('.close-btn').addEventListener('click', () => {
-            document.querySelector('.info-panel').classList.remove('active');
-        });
+        const closeBtn = document.querySelector('.close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                document.querySelector('.info-panel').classList.remove('active');
+            });
+        }
 
         // Close instructions
-        document.querySelector('.close-instructions').addEventListener('click', () => {
-            document.querySelector('.instructions-overlay').classList.add('hidden');
-        });
+        const closeInstructions = document.querySelector('.close-instructions');
+        if (closeInstructions) {
+            closeInstructions.addEventListener('click', () => {
+                document.querySelector('.instructions-overlay').classList.add('hidden');
+            });
+        }
     }
 
     snapToGrid(card) {
         const gridSize = 50;
         const rect = card.getBoundingClientRect();
-        const x = Math.round((rect.left + rect.width / 2) / gridSize) * gridSize - rect.width / 2;
-        const y = Math.round((rect.top + rect.height / 2) / gridSize) * gridSize - rect.height / 2;
+        
+        const x = Math.round(rect.left / gridSize) * gridSize;
+        const y = Math.round(rect.top / gridSize) * gridSize;
 
         gsap.to(card, {
-            x: x,
-            y: y,
+            left: x + 'px',
+            top: y + 'px',
             duration: 0.4,
             ease: 'elastic.out(1, 0.5)'
         });
-    }
-
-    updateDragIndicator(x, y) {
-        // Could add visual feedback here (cursor change, etc.)
-        // Currently using CSS cursor property
     }
 }
 
@@ -149,13 +152,18 @@ class KeyboardManager {
                 if (activeCard) {
                     activeCard.classList.remove('active');
                 }
-                document.querySelector('.info-panel').classList.remove('active');
+                const infoPanel = document.querySelector('.info-panel');
+                if (infoPanel) {
+                    infoPanel.classList.remove('active');
+                }
                 break;
 
             case 'Delete':
             case 'Backspace':
                 if (activeCard && e.ctrlKey) {
-                    window.gallery?.deleteCard(activeCard);
+                    if (window.gallery) {
+                        window.gallery.deleteCard(activeCard);
+                    }
                 }
                 break;
 
@@ -188,8 +196,8 @@ class KeyboardManager {
                 if (e.ctrlKey && activeCard) {
                     // Reset position and rotation
                     gsap.to(activeCard, {
-                        x: window.innerWidth / 2 - activeCard.offsetWidth / 2,
-                        y: window.innerHeight / 2 - activeCard.offsetHeight / 2,
+                        left: window.innerWidth / 2 - activeCard.offsetWidth / 2 + 'px',
+                        top: window.innerHeight / 2 - activeCard.offsetHeight / 2 + 'px',
                         rotationZ: 0,
                         scale: 1,
                         duration: 0.6,
@@ -203,9 +211,12 @@ class KeyboardManager {
 
 // Initialize interaction managers when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const interactionManager = new InteractionManager();
-    const keyboardManager = new KeyboardManager();
+    // Wait a bit for gallery to initialize
+    setTimeout(() => {
+        const interactionManager = new InteractionManager();
+        const keyboardManager = new KeyboardManager();
 
-    window.interactionManager = interactionManager;
-    window.keyboardManager = keyboardManager;
+        window.interactionManager = interactionManager;
+        window.keyboardManager = keyboardManager;
+    }, 100);
 });
