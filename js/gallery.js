@@ -97,9 +97,9 @@ class Gallery {
 
             this.cards.forEach((card, index) => {
                 // Each card has its own scroll window - staggered appearance
-                // Increased stagger for slower movement
-                const cardStartScroll = index * (1.5 / this.cards.length);
-                const cardScrollRange = 1.2 / this.cards.length;
+                // Increased stagger for much slower movement
+                const cardStartScroll = index * (2.5 / this.cards.length);
+                const cardScrollRange = 1.8 / this.cards.length;
                 
                 let cardProgress = 0;
                 if (scrollProgress >= cardStartScroll) {
