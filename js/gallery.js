@@ -126,6 +126,9 @@ class Gallery {
                 });
             });
         });
+
+        // Trigger initial animation
+        window.dispatchEvent(new Event('scroll'));
     }
 
     selectCard(card, event) {
