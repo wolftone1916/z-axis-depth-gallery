@@ -114,7 +114,7 @@ class Gallery {
             const isInitial = card.dataset.isInitial === 'true';
 
             if (isInitial) {
-                // Initial 3 cards positioned on screen, ready to view and drag
+                // Initial 3 cards positioned on screen, centered
                 const positions = [
                     { x: centerX - cardWidth - 150, y: centerY - cardHeight / 2 - 50 }, // Hero - Left
                     { x: centerX - cardWidth / 2, y: centerY - cardHeight / 2 - 100 }, // About - Center
@@ -127,36 +127,40 @@ class Gallery {
                     position: 'absolute',
                     left: pos.x,
                     top: pos.y,
-                    z: 1000 - index * 50,
+                    z: 1000,
                     scale: 1,
                     opacity: 1,
                     rotationX: 0,
                     rotationY: 0,
                     rotationZ: 0,
-                    filter: 'blur(0px)'
+                    filter: 'blur(0px)',
+                    x: 0,
+                    y: 0
                 });
             } else {
                 // Background cards - blurred and positioned behind
                 const backgroundIndex = index - 3;
-                const angle = (backgroundIndex / (this.cards.length - 3)) * Math.PI * 2;
+                const angle = (backgroundIndex / Math.max(1, this.cards.length - 3)) * Math.PI * 2;
                 const radius = 600;
                 const offsetX = Math.cos(angle) * radius;
                 const offsetY = Math.sin(angle) * radius * 0.15;
 
-                const startX = centerX - cardWidth / 2 + offsetX;
-                const startY = centerY - cardHeight / 2 + offsetY;
+                const centerOffsetX = centerX - 350 / 2 + offsetX;
+                const centerOffsetY = centerY - 450 / 2 + offsetY;
 
                 gsap.set(card, {
                     position: 'absolute',
-                    left: startX,
-                    top: startY,
-                    z: -2000 - backgroundIndex * 400,
+                    left: centerOffsetX,
+                    top: centerOffsetY,
+                    z: -2000,
                     scale: 0.8,
                     opacity: 0.5,
                     rotationX: Math.random() * 8 - 4,
                     rotationY: Math.random() * 8 - 4,
                     rotationZ: Math.random() * 4 - 2,
-                    filter: 'blur(10px)'
+                    filter: 'blur(10px)',
+                    x: 0,
+                    y: 0
                 });
             }
         });
@@ -178,8 +182,10 @@ class Gallery {
             const isInitial = card.dataset.isInitial === 'true';
 
             if (isInitial) {
-                // Initial cards move away and fade as user scrolls
-                const moveDistance = scrollProgress * 1000;
+                // Initial cards move up and fade as user scrolls
+                const moveAwayDistance = scrollProgress * 500;
+
+                // Different directions for each card
                 const directions = [
                     { x: -300, y: -300 }, // Hero moves left and up
                     { x: 0, y: -400 }, // About moves straight up
@@ -193,9 +199,10 @@ class Gallery {
                 gsap.set(card, {
                     x: dir.x * scrollProgress,
                     y: dir.y * scrollProgress,
-                    z: 1000 - index * 50 - scrollProgress * 3000,
+                    z: 1000 - scrollProgress * 3000,
                     opacity: opacityValue,
-                    scale: scaleValue
+                    scale: scaleValue,
+                    filter: 'blur(0px)'
                 });
             } else {
                 // Background cards animate toward foreground
@@ -210,62 +217,59 @@ class Gallery {
                     cardProgress = 1;
                 }
 
-                // Animate positions to center screen
+                // Target positions (where they should land)
                 const positions = [
-                    { x: centerX - cardWidth - 150, y: centerY - cardHeight / 2 - 50 }, // Hero position
-                    { x: centerX - cardWidth / 2, y: centerY - cardHeight / 2 - 100 }, // About position
-                    { x: centerX + 150, y: centerY - cardHeight / 2 - 50 } // Contact position
+                    { x: centerX - cardWidth - 150, y: centerY - cardHeight / 2 - 50 },
+                    { x: centerX - cardWidth / 2, y: centerY - cardHeight / 2 - 100 },
+                    { x: centerX + 150, y: centerY - cardHeight / 2 - 50 }
                 ];
 
                 const targetPos = positions[backgroundIndex % 3];
 
-                // Get current position
-                const angle = (backgroundIndex / (this.cards.length - 3)) * Math.PI * 2;
+                // Starting positions (where they are behind)
+                const angle = (backgroundIndex / Math.max(1, this.cards.length - 3)) * Math.PI * 2;
                 const radius = 600;
-                const offsetX = Math.cos(angle) * radius;
-                const offsetY = Math.sin(angle) * radius * 0.15;
+                const startOffsetX = Math.cos(angle) * radius;
+                const startOffsetY = Math.sin(angle) * radius * 0.15;
 
-                const startX = centerX - cardWidth / 2 + offsetX;
-                const startY = centerY - cardHeight / 2 + offsetY;
+                const startX = centerX - 350 / 2 + startOffsetX;
+                const startY = centerY - 450 / 2 + startOffsetY;
 
-                const finalX = targetPos.x;
-                const finalY = targetPos.y;
+                // Interpolate position
+                const interpolatedX = startX + (targetPos.x - startX) * cardProgress;
+                const interpolatedY = startY + (targetPos.y - startY) * cardProgress;
 
-                const currentX = startX + (finalX - startX) * cardProgress;
-                const currentY = startY + (finalY - startY) * cardProgress;
-
-                const initialZ = -2000 - backgroundIndex * 400;
-                const finalZ = 800;
+                // Z depth animation
+                const initialZ = -2000;
+                const finalZ = 900;
                 const zValue = initialZ + cardProgress * (finalZ - initialZ);
 
-                const initialScale = 0.8;
-                const finalScale = 1;
-                const scaleValue = initialScale + cardProgress * (finalScale - initialScale);
-
-                const initialOpacity = 0.5;
-                const finalOpacity = 1;
-                const opacityValue = initialOpacity + cardProgress * (finalOpacity - initialOpacity);
-
+                // Scale and opacity
+                const scaleValue = 0.8 + cardProgress * 0.2;
+                const opacityValue = 0.5 + cardProgress * 0.5;
                 const blurValue = 10 - cardProgress * 10;
 
                 gsap.set(card, {
-                    left: currentX,
-                    top: currentY,
+                    left: interpolatedX,
+                    top: interpolatedY,
                     z: zValue,
                     scale: scaleValue,
                     opacity: opacityValue,
-                    filter: `blur(${Math.max(0, blurValue)}px)`
+                    filter: `blur(${Math.max(0, blurValue)}px)`,
+                    x: 0,
+                    y: 0
                 });
             }
         });
     }
 
     setupScrollAnimation() {
-        const animate = () => {
+        window.addEventListener('scroll', () => {
             this.updateCardAnimation();
-            requestAnimationFrame(animate);
-        };
-        animate();
+        });
+        
+        // Initial call
+        this.updateCardAnimation();
     }
 
     makeCardsDraggable() {
@@ -291,13 +295,19 @@ class Gallery {
             card.addEventListener('contextmenu', (e) => this.sendToBackground(card, e));
         });
 
-        document.querySelector('.close-btn').addEventListener('click', () => {
-            document.querySelector('.info-panel').classList.remove('active');
-        });
+        const closeBtn = document.querySelector('.close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                document.querySelector('.info-panel').classList.remove('active');
+            });
+        }
 
-        document.querySelector('.close-instructions').addEventListener('click', () => {
-            document.querySelector('.instructions-overlay').classList.add('hidden');
-        });
+        const closeInstructions = document.querySelector('.close-instructions');
+        if (closeInstructions) {
+            closeInstructions.addEventListener('click', () => {
+                document.querySelector('.instructions-overlay').classList.add('hidden');
+            });
+        }
     }
 
     selectCard(card, event) {
