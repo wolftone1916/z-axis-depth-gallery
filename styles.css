@@ -14,13 +14,156 @@ body {
     background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
     color: #e0e0e0;
     overflow-x: hidden;
-    min-height: 1000vh;
+}
+
+/* Hero Section */
+.hero {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0, 188, 212, 0.1) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.2); }
+}
+
+.hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #00bcd4, #00e5ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.hero .tagline {
+    font-size: 1.5rem;
+    color: #b0b0b0;
+    margin-bottom: 2rem;
+}
+
+.scroll-hint {
+    animation: bounce 2s infinite;
+    font-size: 1.2rem;
+    color: #00bcd4;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(10px); }
+}
+
+/* About Section */
+.about-section {
+    padding: 80px 40px;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.about-section h2 {
+    font-size: 2.5rem;
+    color: #00e5ff;
+    margin-bottom: 2rem;
+    background: linear-gradient(45deg, #00bcd4, #00e5ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.about-content p {
+    font-size: 1.1rem;
+    color: #b0b0b0;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+/* Contact Section */
+.contact-section {
+    padding: 80px 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.contact-card {
+    background: linear-gradient(135deg, #1e1e3f 0%, #2a2a4e 100%);
+    border: 2px solid #00bcd4;
+    border-radius: 12px;
+    padding: 3rem;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 188, 212, 0.2);
+}
+
+.contact-card h2 {
+    font-size: 2rem;
+    color: #00e5ff;
+    margin-bottom: 1rem;
+}
+
+.contact-card p {
+    font-size: 1.1rem;
+    color: #b0b0b0;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.contact-links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.contact-btn {
+    padding: 0.8rem 1.5rem;
+    background: linear-gradient(45deg, #00bcd4, #00e5ff);
+    border: none;
+    border-radius: 6px;
+    color: #0f0f1e;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.contact-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 188, 212, 0.4);
 }
 
 /* Gallery Section */
 .gallery-section {
-    height: 1000vh;
+    height: 400vh;
     position: relative;
+    margin-top: 4rem;
 }
 
 .perspective-container {
@@ -67,12 +210,6 @@ body {
     box-shadow: 0 0 60px rgba(0, 188, 212, 0.8);
     border-color: #00e5ff;
     z-index: 1000 !important;
-}
-
-.project-card.dragging {
-    cursor: grabbing;
-    z-index: 2000 !important;
-    box-shadow: 0 0 80px rgba(0, 188, 212, 1);
 }
 
 .project-card::before {
@@ -178,11 +315,7 @@ body {
     box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
 }
 
-.control-btn:active {
-    transform: scale(0.95);
-}
-
-/* Info Panel (Iron Man Style) */
+/* Info Panel */
 .info-panel {
     position: fixed;
     top: 20px;
@@ -321,6 +454,27 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero .tagline {
+        font-size: 1.1rem;
+    }
+
+    .about-section {
+        padding: 60px 20px;
+    }
+
+    .about-section h2 {
+        font-size: 1.8rem;
+    }
+
+    .contact-card {
+        padding: 2rem;
+        max-width: 90%;
+    }
+
     .project-card {
         width: 300px;
         height: 400px;
