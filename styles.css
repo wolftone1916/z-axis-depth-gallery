@@ -14,11 +14,12 @@ body {
     background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
     color: #e0e0e0;
     overflow-x: hidden;
+    min-height: 600vh;
 }
 
 /* Gallery Section */
 .gallery-section {
-    height: 300vh;
+    height: 600vh;
     position: relative;
 }
 
