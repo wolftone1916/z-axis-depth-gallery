@@ -3,6 +3,7 @@ class Gallery {
     constructor() {
         this.viewport = document.querySelector('#galleryViewport');
         this.cards = [];
+        this.cardStates = []; // Store initial states
         this.activeCard = null;
         this.scrollProgress = 0;
         this.isDragging = false;
@@ -12,9 +13,9 @@ class Gallery {
     init() {
         this.createAllCards();
         this.setupCardPositioning();
-        this.setupScrollAnimation();
         this.attachEventListeners();
         this.makeCardsDraggable();
+        this.setupScrollAnimation();
     }
 
     createAllCards() {
@@ -108,90 +109,88 @@ class Gallery {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
 
-        // Layered dashboard layout - multiple cards visible at different depths
-        const layoutPositions = [
-            // Layer 1 - Background cards (smaller, more blurred)
-            { x: centerX - 400, y: centerY - 300, z: -1500, scale: 0.6, rot: -15, opacity: 0.7 },
-            { x: centerX + 200, y: centerY - 250, z: -1400, scale: 0.65, rot: 10, opacity: 0.75 },
-            { x: centerX - 100, y: centerY + 150, z: -1600, scale: 0.55, rot: 8, opacity: 0.6 },
+        // Dashboard layout - cards arranged like the Iron Man interface
+        const dashboardLayout = [
+            // Back layer
+            { left: centerX - 600, top: centerY - 350, z: -1500, scale: 0.65, rotation: -12, opacity: 0.7, blur: 6 },
+            { left: centerX + 350, top: centerY - 300, z: -1400, scale: 0.70, rotation: 8, opacity: 0.75, blur: 5 },
+            { left: centerX - 150, top: centerY + 200, z: -1600, scale: 0.60, rotation: 10, opacity: 0.65, blur: 7 },
             
-            // Layer 2 - Mid cards (medium size)
-            { x: centerX - 250, y: centerY - 100, z: -800, scale: 0.8, rot: -8, opacity: 0.85 },
-            { x: centerX + 350, y: centerY + 50, z: -900, scale: 0.75, rot: 12, opacity: 0.8 },
-            { x: centerX + 50, y: centerY - 350, z: -1000, scale: 0.7, rot: -5, opacity: 0.8 },
+            // Middle layer
+            { left: centerX - 400, top: centerY - 100, z: -800, scale: 0.80, rotation: -5, opacity: 0.85, blur: 3 },
+            { left: centerX + 250, top: centerY + 150, z: -900, scale: 0.75, rotation: 6, opacity: 0.80, blur: 4 },
+            { left: centerX + 50, top: centerY - 400, z: -1000, scale: 0.72, rotation: -8, opacity: 0.80, blur: 4 },
             
-            // Layer 3 - Front cards (full size, most visible)
-            { x: centerX - 175, y: centerY + 100, z: 500, scale: 1, rot: -2, opacity: 1 },
-            { x: centerX + 100, y: centerY - 200, z: 600, scale: 1, rot: 3, opacity: 1 },
-            { x: centerX - 350, y: centerY - 50, z: 400, scale: 0.95, rot: 1, opacity: 0.95 }
+            // Front layer
+            { left: centerX - 200, top: centerY + 80, z: 400, scale: 1.0, rotation: 0, opacity: 1, blur: 0 },
+            { left: centerX + 150, top: centerY - 150, z: 500, scale: 1.0, rotation: 2, opacity: 1, blur: 0 },
+            { left: centerX - 500, top: centerY - 50, z: 300, scale: 0.95, rotation: -3, opacity: 0.95, blur: 0 }
         ];
 
         this.cards.forEach((card, index) => {
-            const layout = layoutPositions[index] || {
-                x: centerX + (Math.random() - 0.5) * 800,
-                y: centerY + (Math.random() - 0.5) * 600,
-                z: -2000 - index * 300,
-                scale: 0.5 + Math.random() * 0.3,
-                rot: (Math.random() - 0.5) * 20,
-                opacity: 0.5
+            const layout = dashboardLayout[index] || {
+                left: centerX + (Math.random() - 0.5) * 1000,
+                top: centerY + (Math.random() - 0.5) * 800,
+                z: -2000 - index * 400,
+                scale: 0.5,
+                rotation: (Math.random() - 0.5) * 30,
+                opacity: 0.5,
+                blur: 8
+            };
+
+            // Store initial state
+            this.cardStates[index] = {
+                left: layout.left,
+                top: layout.top,
+                z: layout.z,
+                scale: layout.scale,
+                rotation: layout.rotation,
+                opacity: layout.opacity,
+                blur: layout.blur
             };
 
             gsap.set(card, {
                 position: 'absolute',
-                left: layout.x,
-                top: layout.y,
-                z: layout.z,
+                left: layout.left,
+                top: layout.top,
+                zIndex: layout.z,
                 scale: layout.scale,
                 opacity: layout.opacity,
-                rotationZ: layout.rot,
-                filter: layout.z < -1000 ? 'blur(5px)' : 'blur(0px)',
-                x: 0,
-                y: 0
-            });
-        });
-    }
-
-    updateCardAnimation() {
-        const scrollY = window.scrollY;
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
-
-        this.scrollProgress = scrollProgress;
-
-        this.cards.forEach((card, index) => {
-            // Get current position
-            const gsapTarget = gsap.getProperty(card, 'left');
-            const currentLeft = gsapTarget || 0;
-            const currentTop = gsap.getProperty(card, 'top') || 0;
-            const currentZ = gsap.getProperty(card, 'z') || 0;
-            const currentScale = gsap.getProperty(card, 'scale') || 1;
-
-            // Move toward camera (increase Z) and fade out
-            const moveTowardCamera = scrollProgress * 4000;
-            const opacityValue = Math.max(0, 1 - scrollProgress * 1.3);
-            const scaleValue = Math.max(0.2, currentScale - scrollProgress * 0.4);
-
-            // Slight outward movement for parallax effect
-            const outwardX = (currentLeft - window.innerWidth / 2) * scrollProgress * 0.3;
-            const outwardY = (currentTop - window.innerHeight / 2) * scrollProgress * 0.3;
-
-            gsap.set(card, {
-                z: currentZ + moveTowardCamera,
-                opacity: opacityValue,
-                scale: scaleValue,
-                x: outwardX,
-                y: outwardY
+                rotation: layout.rotation,
+                filter: `blur(${layout.blur}px)`,
+                transformOrigin: '50% 50%',
+                transform: `perspective(1200px) rotateZ(${layout.rotation}deg) scale(${layout.scale})`
             });
         });
     }
 
     setupScrollAnimation() {
         window.addEventListener('scroll', () => {
-            this.updateCardAnimation();
+            const scrollY = window.scrollY;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
+
+            this.scrollProgress = scrollProgress;
+
+            this.cards.forEach((card, index) => {
+                const initialState = this.cardStates[index];
+
+                // Move cards toward camera and make them smaller/invisible
+                const moveTowardZ = scrollProgress * 5000; // Move toward camera
+                const opacityFade = Math.max(0, 1 - scrollProgress * 1.5);
+                const scaleShrink = Math.max(0.1, initialState.scale - scrollProgress * 0.5);
+                
+                // Blur increases as they move away (backward in z)
+                const blurAmount = initialState.blur + scrollProgress * 10;
+
+                gsap.set(card, {
+                    zIndex: initialState.z + moveTowardZ,
+                    opacity: opacityFade,
+                    scale: scaleShrink,
+                    filter: `blur(${Math.min(20, blurAmount)}px)`
+                });
+            });
         });
-        
-        // Initial call
-        this.updateCardAnimation();
     }
 
     makeCardsDraggable() {
@@ -202,7 +201,8 @@ class Gallery {
                 onDragStart: () => {
                     this.isDragging = true;
                     card.classList.add('dragging');
-                    gsap.to(card, { z: 2000, duration: 0.3 });
+                    // Bring dragging card to front
+                    gsap.to(card, { zIndex: 9999, duration: 0.1 });
                 },
                 onDragEnd: () => {
                     this.isDragging = false;
@@ -248,8 +248,8 @@ class Gallery {
         card.classList.add('active');
 
         gsap.to(card, {
-            z: 8000,
-            duration: 0.5,
+            zIndex: 10000,
+            duration: 0.3,
             ease: 'power2.out'
         });
     }
@@ -289,7 +289,7 @@ class Gallery {
         event.preventDefault();
         card.classList.remove('active');
         gsap.to(card, {
-            z: -6000,
+            zIndex: -9999,
             duration: 0.8,
             ease: 'power2.inOut'
         });
@@ -297,8 +297,6 @@ class Gallery {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        const gallery = new Gallery();
-        window.gallery = gallery;
-    }, 100);
+    const gallery = new Gallery();
+    window.gallery = gallery;
 });
