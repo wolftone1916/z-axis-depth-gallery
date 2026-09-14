@@ -114,11 +114,11 @@ class Gallery {
             const isInitial = card.dataset.isInitial === 'true';
 
             if (isInitial) {
-                // Initial cards positioned in foreground, ready to drag
+                // Initial 3 cards positioned on screen, ready to view and drag
                 const positions = [
-                    { x: centerX - cardWidth - 100, y: centerY - cardHeight / 2 }, // Hero - Left
-                    { x: centerX - cardWidth / 2, y: centerY - cardHeight / 2 - 80 }, // About - Center/Top
-                    { x: centerX + 100, y: centerY - cardHeight / 2 } // Contact - Right
+                    { x: centerX - cardWidth - 150, y: centerY - cardHeight / 2 - 50 }, // Hero - Left
+                    { x: centerX - cardWidth / 2, y: centerY - cardHeight / 2 - 100 }, // About - Center
+                    { x: centerX + 150, y: centerY - cardHeight / 2 - 50 } // Contact - Right
                 ];
                 
                 const pos = positions[index] || positions[0];
@@ -127,7 +127,7 @@ class Gallery {
                     position: 'absolute',
                     left: pos.x,
                     top: pos.y,
-                    z: 1000 - index * 10,
+                    z: 1000 - index * 50,
                     scale: 1,
                     opacity: 1,
                     rotationX: 0,
@@ -136,26 +136,27 @@ class Gallery {
                     filter: 'blur(0px)'
                 });
             } else {
-                // Background cards - slightly blurred, ready to come forward
-                const angle = ((index - 3) / (this.cards.length - 3)) * Math.PI * 2;
-                const radius = 400;
+                // Background cards - blurred and positioned behind
+                const backgroundIndex = index - 3;
+                const angle = (backgroundIndex / (this.cards.length - 3)) * Math.PI * 2;
+                const radius = 600;
                 const offsetX = Math.cos(angle) * radius;
-                const offsetY = Math.sin(angle) * radius * 0.2;
+                const offsetY = Math.sin(angle) * radius * 0.15;
 
-                const startX = centerX - 350 / 2 + offsetX;
-                const startY = centerY - 450 / 2 + offsetY;
+                const startX = centerX - cardWidth / 2 + offsetX;
+                const startY = centerY - cardHeight / 2 + offsetY;
 
                 gsap.set(card, {
                     position: 'absolute',
                     left: startX,
                     top: startY,
-                    z: -3000 - (index - 3) * 500,
-                    scale: 0.7 + (index - 3) * 0.03,
-                    opacity: 0.6,
-                    rotationX: Math.random() * 10 - 5,
-                    rotationY: Math.random() * 10 - 5,
-                    rotationZ: Math.random() * 5 - 2.5,
-                    filter: 'blur(8px)'
+                    z: -2000 - backgroundIndex * 400,
+                    scale: 0.8,
+                    opacity: 0.5,
+                    rotationX: Math.random() * 8 - 4,
+                    rotationY: Math.random() * 8 - 4,
+                    rotationZ: Math.random() * 4 - 2,
+                    filter: 'blur(10px)'
                 });
             }
         });
@@ -168,33 +169,39 @@ class Gallery {
 
         this.scrollProgress = scrollProgress;
 
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const cardWidth = 350;
+        const cardHeight = 450;
+
         this.cards.forEach((card, index) => {
             const isInitial = card.dataset.isInitial === 'true';
 
             if (isInitial) {
-                // Initial cards move away as user scrolls
-                const moveDistance = scrollProgress * 800;
+                // Initial cards move away and fade as user scrolls
+                const moveDistance = scrollProgress * 1000;
                 const directions = [
-                    { x: -400, y: -200 }, // Hero moves left and up
+                    { x: -300, y: -300 }, // Hero moves left and up
                     { x: 0, y: -400 }, // About moves straight up
-                    { x: 400, y: -200 } // Contact moves right and up
+                    { x: 300, y: -300 } // Contact moves right and up
                 ];
                 const dir = directions[index] || directions[0];
 
-                const opacityValue = Math.max(0, 1 - scrollProgress * 1.5);
+                const opacityValue = Math.max(0, 1 - scrollProgress * 1.2);
+                const scaleValue = Math.max(0.3, 1 - scrollProgress * 0.4);
 
                 gsap.set(card, {
                     x: dir.x * scrollProgress,
                     y: dir.y * scrollProgress,
-                    z: 1000 - index * 10 - scrollProgress * 2000,
+                    z: 1000 - index * 50 - scrollProgress * 3000,
                     opacity: opacityValue,
-                    scale: 1 - scrollProgress * 0.3
+                    scale: scaleValue
                 });
             } else {
                 // Background cards animate toward foreground
-                const cardIndex = index - 3;
-                const cardStartScroll = cardIndex * 0.15;
-                const cardEndScroll = cardStartScroll + 0.35;
+                const backgroundIndex = index - 3;
+                const cardStartScroll = 0.1 + backgroundIndex * 0.18;
+                const cardEndScroll = cardStartScroll + 0.22;
 
                 let cardProgress = 0;
                 if (scrollProgress >= cardStartScroll && scrollProgress <= cardEndScroll) {
@@ -203,24 +210,47 @@ class Gallery {
                     cardProgress = 1;
                 }
 
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
+                // Animate positions to center screen
+                const positions = [
+                    { x: centerX - cardWidth - 150, y: centerY - cardHeight / 2 - 50 }, // Hero position
+                    { x: centerX - cardWidth / 2, y: centerY - cardHeight / 2 - 100 }, // About position
+                    { x: centerX + 150, y: centerY - cardHeight / 2 - 50 } // Contact position
+                ];
 
-                const initialZ = -3000 - cardIndex * 500;
+                const targetPos = positions[backgroundIndex % 3];
+
+                // Get current position
+                const angle = (backgroundIndex / (this.cards.length - 3)) * Math.PI * 2;
+                const radius = 600;
+                const offsetX = Math.cos(angle) * radius;
+                const offsetY = Math.sin(angle) * radius * 0.15;
+
+                const startX = centerX - cardWidth / 2 + offsetX;
+                const startY = centerY - cardHeight / 2 + offsetY;
+
+                const finalX = targetPos.x;
+                const finalY = targetPos.y;
+
+                const currentX = startX + (finalX - startX) * cardProgress;
+                const currentY = startY + (finalY - startY) * cardProgress;
+
+                const initialZ = -2000 - backgroundIndex * 400;
                 const finalZ = 800;
                 const zValue = initialZ + cardProgress * (finalZ - initialZ);
 
-                const initialScale = 0.7 + cardIndex * 0.03;
+                const initialScale = 0.8;
                 const finalScale = 1;
                 const scaleValue = initialScale + cardProgress * (finalScale - initialScale);
 
-                const initialOpacity = 0.6;
+                const initialOpacity = 0.5;
                 const finalOpacity = 1;
                 const opacityValue = initialOpacity + cardProgress * (finalOpacity - initialOpacity);
 
-                const blurValue = 8 - cardProgress * 8;
+                const blurValue = 10 - cardProgress * 10;
 
                 gsap.set(card, {
+                    left: currentX,
+                    top: currentY,
                     z: zValue,
                     scale: scaleValue,
                     opacity: opacityValue,
