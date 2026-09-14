@@ -81,54 +81,53 @@ class Gallery {
         });
     }
 
-    setupScrollAnimation() {
-        // Use direct scroll listener for Z-axis movement
-        window.addEventListener('scroll', () => {
-            const scrollY = window.scrollY;
-            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
+    updateCardAnimation() {
+        const scrollY = window.scrollY;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
 
-            this.scrollProgress = scrollProgress;
+        this.scrollProgress = scrollProgress;
 
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            const centerX = viewportWidth / 2;
-            const centerY = viewportHeight / 2;
+        this.cards.forEach((card, index) => {
+            // Each card has its own scroll window - MUCH slower movement
+            // Significantly increased stagger for very slow progression
+            const cardStartScroll = index * (4 / this.cards.length);
+            const cardScrollRange = 2.5 / this.cards.length;
+            
+            let cardProgress = 0;
+            if (scrollProgress >= cardStartScroll) {
+                cardProgress = Math.min(1, (scrollProgress - cardStartScroll) / cardScrollRange);
+            }
 
-            this.cards.forEach((card, index) => {
-                // Each card has its own scroll window - MUCH slower movement
-                // Significantly increased stagger for very slow progression
-                const cardStartScroll = index * (4 / this.cards.length);
-                const cardScrollRange = 2.5 / this.cards.length;
-                
-                let cardProgress = 0;
-                if (scrollProgress >= cardStartScroll) {
-                    cardProgress = Math.min(1, (scrollProgress - cardStartScroll) / cardScrollRange);
-                }
+            // Card starts far away and small, scales up as it comes closer
+            const initialZ = -3000 - index * 500;
+            const zValue = initialZ + cardProgress * 4000;
+            const scaleValue = 0.2 + index * 0.05 + cardProgress * 0.8;
+            
+            // Opacity: fade in, peak at middle, fade out
+            let opacityValue = 0.5;
+            if (cardProgress < 0.5) {
+                opacityValue = 0.5 + cardProgress;
+            } else {
+                opacityValue = 1.5 - cardProgress;
+            }
 
-                // Card starts far away and small, scales up as it comes closer
-                const initialZ = -3000 - index * 500;
-                const zValue = initialZ + cardProgress * 4000;
-                const scaleValue = 0.2 + index * 0.05 + cardProgress * 0.8;
-                
-                // Opacity: fade in, peak at middle, fade out
-                let opacityValue = 0.5;
-                if (cardProgress < 0.5) {
-                    opacityValue = 0.5 + cardProgress;
-                } else {
-                    opacityValue = 1.5 - cardProgress;
-                }
-
-                gsap.set(card, {
-                    z: zValue,
-                    scale: scaleValue,
-                    opacity: opacityValue
-                });
+            gsap.set(card, {
+                z: zValue,
+                scale: scaleValue,
+                opacity: opacityValue
             });
         });
+    }
 
-        // Trigger initial animation
-        window.dispatchEvent(new Event('scroll'));
+    setupScrollAnimation() {
+        // Use RAF for continuous animation
+        const animate = () => {
+            this.updateCardAnimation();
+            requestAnimationFrame(animate);
+        };
+        
+        animate();
     }
 
     selectCard(card, event) {
