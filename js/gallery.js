@@ -1,9 +1,9 @@
-// Gallery Initialization and Card Generation
+// Gallery Initialization
 class Gallery {
     constructor() {
-        this.viewport = document.querySelector('.gallery-viewport');
+        this.viewport = document.querySelector('#galleryViewport');
+        this.container = document.querySelector('.scroll-container');
         this.cards = [];
-        this.activeCard = null;
         this.scrollProgress = 0;
         this.init();
     }
@@ -12,6 +12,7 @@ class Gallery {
         this.createCards();
         this.setupCardPositioning();
         this.setupScrollAnimation();
+        this.attachEventListeners();
     }
 
     createCards() {
@@ -42,42 +43,30 @@ class Gallery {
                 <button class="control-btn" title="Delete">✕</button>
             </div>
         `;
-
-        // Add event listeners BEFORE positioning
-        card.addEventListener('click', (e) => this.selectCard(card, e));
-        card.addEventListener('contextmenu', (e) => this.sendToBackground(card, e));
-
         return card;
     }
 
     setupCardPositioning() {
-        // Position cards centered
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        const centerX = viewportWidth / 2;
-        const centerY = viewportHeight / 2;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
 
         this.cards.forEach((card, index) => {
-            const cardWidth = 300;
-            const cardHeight = 380;
-            
+            const cardWidth = 400;
+            const cardHeight = 500;
             const startX = centerX - cardWidth / 2;
             const startY = centerY - cardHeight / 2;
 
+            // Start cards deep in background
             gsap.set(card, {
                 position: 'absolute',
                 left: startX,
                 top: startY,
-                x: 0,
-                y: 0,
-                z: -3000 - index * 500,
-                rotationZ: 0,
-                scale: 0.2 + index * 0.05,
-                opacity: 0.5
+                z: -5000 - index * 800,
+                scale: 0.3 + index * 0.05,
+                opacity: 0.3,
+                rotationX: 0,
+                rotationY: 0
             });
-
-            card.dataset.cardIndex = index;
         });
     }
 
@@ -89,28 +78,29 @@ class Gallery {
         this.scrollProgress = scrollProgress;
 
         this.cards.forEach((card, index) => {
-            // Each card has its own scroll window - MUCH slower movement
-            // Significantly increased stagger for very slow progression
-            const cardStartScroll = index * (4 / this.cards.length);
-            const cardScrollRange = 2.5 / this.cards.length;
+            // Each card moves forward at different scroll positions
+            const cardStartScroll = index * 0.15;
+            const cardEndScroll = cardStartScroll + 0.25;
             
             let cardProgress = 0;
-            if (scrollProgress >= cardStartScroll) {
-                cardProgress = Math.min(1, (scrollProgress - cardStartScroll) / cardScrollRange);
+            if (scrollProgress >= cardStartScroll && scrollProgress <= cardEndScroll) {
+                cardProgress = (scrollProgress - cardStartScroll) / (cardEndScroll - cardStartScroll);
+            } else if (scrollProgress > cardEndScroll) {
+                cardProgress = 1;
             }
 
-            // Card starts far away and small, scales up as it comes closer
-            const initialZ = -3000 - index * 500;
-            const zValue = initialZ + cardProgress * 4000;
-            const scaleValue = 0.2 + index * 0.05 + cardProgress * 0.8;
-            
-            // Opacity: fade in, peak at middle, fade out
-            let opacityValue = 0.5;
-            if (cardProgress < 0.5) {
-                opacityValue = 0.5 + cardProgress;
-            } else {
-                opacityValue = 1.5 - cardProgress;
-            }
+            // Animate from background to foreground
+            const initialZ = -5000 - index * 800;
+            const finalZ = 2000;
+            const zValue = initialZ + cardProgress * (finalZ - initialZ);
+
+            const initialScale = 0.3 + index * 0.05;
+            const finalScale = 1;
+            const scaleValue = initialScale + cardProgress * (finalScale - initialScale);
+
+            const initialOpacity = 0.3;
+            const finalOpacity = 1;
+            const opacityValue = initialOpacity + cardProgress * (finalOpacity - initialOpacity);
 
             gsap.set(card, {
                 z: zValue,
@@ -121,35 +111,43 @@ class Gallery {
     }
 
     setupScrollAnimation() {
-        // Use RAF for continuous animation
         const animate = () => {
             this.updateCardAnimation();
             requestAnimationFrame(animate);
         };
-        
         animate();
     }
 
+    attachEventListeners() {
+        this.cards.forEach(card => {
+            card.addEventListener('click', (e) => this.selectCard(card, e));
+            card.addEventListener('contextmenu', (e) => this.sendToBackground(card, e));
+        });
+
+        // Close buttons
+        document.querySelector('.close-btn').addEventListener('click', () => {
+            document.querySelector('.info-panel').classList.remove('active');
+        });
+
+        document.querySelector('.close-instructions').addEventListener('click', () => {
+            document.querySelector('.instructions-overlay').classList.add('hidden');
+        });
+    }
+
     selectCard(card, event) {
-        // Don't select if clicking a control button
         if (event.target.closest('.control-btn')) {
             const btn = event.target.closest('.control-btn');
-            if (btn) {
-                if (btn.title === 'Info') {
-                    this.showInfo(card);
-                } else if (btn.title === 'Delete') {
-                    this.deleteCard(card);
-                }
+            if (btn.title === 'Info') {
+                this.showInfo(card);
+            } else if (btn.title === 'Delete') {
+                this.deleteCard(card);
             }
             return;
         }
 
-        this.activeCard = card;
-        this.cards.forEach(c => c.classList.remove('active'));
         card.classList.add('active');
-
         gsap.to(card, {
-            z: 5000,
+            z: 8000,
             duration: 0.5,
             ease: 'power2.out'
         });
@@ -182,17 +180,13 @@ class Gallery {
             ease: 'back.in',
             onComplete: () => {
                 card.remove();
-                const index = this.cards.indexOf(card);
-                if (index > -1) {
-                    this.cards.splice(index, 1);
-                }
             }
         });
     }
 
     sendToBackground(card, event) {
         event.preventDefault();
-
+        card.classList.remove('active');
         gsap.to(card, {
             z: -5000,
             duration: 0.8,
@@ -201,7 +195,7 @@ class Gallery {
     }
 }
 
-// Initialize gallery when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const gallery = new Gallery();
