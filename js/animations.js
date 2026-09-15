@@ -54,7 +54,6 @@ class AnimationManager {
     static focusCard(card) {
         gsap.to(card, {
             boxShadow: '0 0 100px rgba(0, 229, 255, 1)',
-            filter: 'brightness(1.2)',
             duration: 0.4,
             ease: 'power2.out'
         });
@@ -64,7 +63,6 @@ class AnimationManager {
     static unfocusCard(card) {
         gsap.to(card, {
             boxShadow: '0 0 30px rgba(0, 188, 212, 0.2)',
-            filter: 'brightness(1)',
             duration: 0.4,
             ease: 'power2.out'
         });
