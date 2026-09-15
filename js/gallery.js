@@ -3,10 +3,9 @@ class Gallery {
     constructor() {
         this.viewport = document.querySelector('#galleryViewport');
         this.cards = [];
-        this.cardStates = []; // Store initial states
+        this.cardStates = [];
         this.activeCard = null;
         this.scrollProgress = 0;
-        this.isDragging = false;
         this.init();
     }
 
@@ -19,7 +18,6 @@ class Gallery {
     }
 
     createAllCards() {
-        // Create initial cards: Hero, About, Contact
         const initialCards = [
             {
                 id: 'hero',
@@ -52,7 +50,6 @@ class Gallery {
             }
         ];
 
-        // Combine with project data
         const allCards = [...initialCards, ...projectsData];
 
         allCards.forEach((cardData, index) => {
@@ -70,7 +67,6 @@ class Gallery {
         }
         card.dataset.id = data.id;
         card.dataset.index = index;
-        card.dataset.isInitial = data.isInitial ? 'true' : 'false';
 
         let content = `
             <div class="card-header">
@@ -109,19 +105,13 @@ class Gallery {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
 
-        // Dashboard layout - cards arranged like the Iron Man interface
         const dashboardLayout = [
-            // Back layer
             { left: centerX - 600, top: centerY - 350, z: -1500, scale: 0.65, rotation: -12, opacity: 0.7, blur: 6 },
             { left: centerX + 350, top: centerY - 300, z: -1400, scale: 0.70, rotation: 8, opacity: 0.75, blur: 5 },
             { left: centerX - 150, top: centerY + 200, z: -1600, scale: 0.60, rotation: 10, opacity: 0.65, blur: 7 },
-            
-            // Middle layer
             { left: centerX - 400, top: centerY - 100, z: -800, scale: 0.80, rotation: -5, opacity: 0.85, blur: 3 },
             { left: centerX + 250, top: centerY + 150, z: -900, scale: 0.75, rotation: 6, opacity: 0.80, blur: 4 },
             { left: centerX + 50, top: centerY - 400, z: -1000, scale: 0.72, rotation: -8, opacity: 0.80, blur: 4 },
-            
-            // Front layer
             { left: centerX - 200, top: centerY + 80, z: 400, scale: 1.0, rotation: 0, opacity: 1, blur: 0 },
             { left: centerX + 150, top: centerY - 150, z: 500, scale: 1.0, rotation: 2, opacity: 1, blur: 0 },
             { left: centerX - 500, top: centerY - 50, z: 300, scale: 0.95, rotation: -3, opacity: 0.95, blur: 0 }
@@ -138,16 +128,7 @@ class Gallery {
                 blur: 8
             };
 
-            // Store initial state
-            this.cardStates[index] = {
-                left: layout.left,
-                top: layout.top,
-                z: layout.z,
-                scale: layout.scale,
-                rotation: layout.rotation,
-                opacity: layout.opacity,
-                blur: layout.blur
-            };
+            this.cardStates[index] = { ...layout };
 
             gsap.set(card, {
                 position: 'absolute',
@@ -158,8 +139,7 @@ class Gallery {
                 opacity: layout.opacity,
                 rotation: layout.rotation,
                 filter: `blur(${layout.blur}px)`,
-                transformOrigin: '50% 50%',
-                transform: `perspective(1200px) rotateZ(${layout.rotation}deg) scale(${layout.scale})`
+                transformOrigin: '50% 50%'
             });
         });
     }
@@ -173,14 +153,11 @@ class Gallery {
             this.scrollProgress = scrollProgress;
 
             this.cards.forEach((card, index) => {
-                // NEVER animate active or dragging cards
                 if (card.classList.contains('dragging') || card.classList.contains('active')) {
                     return;
                 }
 
                 const initialState = this.cardStates[index];
-
-                // Move cards toward camera and make them smaller/invisible
                 const moveTowardZ = scrollProgress * 5000;
                 const opacityFade = Math.max(0, 1 - scrollProgress * 1.5);
                 const scaleShrink = Math.max(0.1, initialState.scale - scrollProgress * 0.5);
@@ -198,97 +175,85 @@ class Gallery {
 
     makeCardsDraggable() {
         this.cards.forEach((card, cardIndex) => {
+            let isDragStart = true;
+
             Draggable.create(card, {
                 type: 'x,y',
                 edgeResistance: 0.65,
-                onDragStart: function() {
+                onDragStart: () => {
+                    isDragStart = true;
                     card.classList.add('dragging');
                     
-                    // Find the highest current zIndex and add to it
                     let maxZ = 9999;
-                    document.querySelectorAll('.project-card').forEach(c => {
-                        const z = parseInt(gsap.getProperty(c, 'zIndex')) || 0;
+                    this.cards.forEach(c => {
+                        const z = parseInt(window.getComputedStyle(c).zIndex) || 0;
                         if (z > maxZ) maxZ = z;
                     });
 
-                    // Bring dragging card to front and make it clear
-                    gsap.to(card, { 
-                        zIndex: maxZ + 1, 
+                    gsap.set(card, {
+                        zIndex: maxZ + 1,
                         opacity: 1,
-                        scale: 1,
-                        filter: 'blur(0px)',
-                        duration: 0.2 
+                        filter: 'blur(0px)'
                     });
                 },
-                onDrag: function() {
-                    const rect = card.getBoundingClientRect();
-                    const cardWidth = rect.width;
-                    const cardHeight = rect.height;
-                    
-                    // Center the card under the mouse cursor
-                    const newLeft = this.pointerX - (cardWidth / 2);
-                    const newTop = this.pointerY - (cardHeight / 2);
-                    
-                    // If dragged above 100px from top, start sending to background
-                    const threshold = 100;
-                    if (newTop < threshold) {
-                        const distanceAboveThreshold = threshold - newTop;
-                        const maxDistance = 300; // Full blur at 300px above threshold
-                        const blurAmount = Math.min(20, (distanceAboveThreshold / maxDistance) * 20);
-                        const opacityAmount = Math.max(0.3, 1 - (distanceAboveThreshold / maxDistance) * 0.7);
-                        const zIndex = Math.max(-9999, 9999 - (distanceAboveThreshold / maxDistance) * 19998);
-
-                        gsap.set(card, {
-                            left: newLeft,
-                            top: newTop,
-                            filter: `blur(${blurAmount}px)`,
-                            opacity: opacityAmount,
-                            zIndex: zIndex
-                        });
-                    } else {
-                        // Normal drag below threshold
-                        gsap.set(card, {
-                            left: newLeft,
-                            top: newTop,
-                            filter: 'blur(0px)',
-                            opacity: 1
-                        });
-                    }
+                onDrag: () => {
+                    isDragStart = false;
                 },
-                onDragEnd: (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const threshold = 100;
-
-                    if (rect.top < threshold) {
-                        // Send to background with animation
-                        const initialState = this.cardStates[cardIndex];
-                        gsap.to(card, {
-                            top: initialState.top,
-                            left: initialState.left,
-                            opacity: 0.5,
-                            filter: 'blur(4px)',
-                            zIndex: -9999,
-                            duration: 0.6,
-                            ease: 'power2.inOut',
-                            onComplete: () => {
-                                card.classList.remove('dragging');
-                            }
-                        });
-                    } else {
-                        card.classList.remove('dragging');
-                        // Card stays at its current position
+                onDragEnd: () => {
+                    card.classList.remove('dragging');
+                    
+                    if (isDragStart) {
+                        this.bringToFront(card);
                     }
                 }
+            });
+
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.control-btn')) {
+                    this.bringToFront(card);
+                } else {
+                    const btn = e.target.closest('.control-btn');
+                    if (btn.title === 'Info') {
+                        this.showInfo(card);
+                    } else if (btn.title === 'Delete') {
+                        this.deleteCard(card);
+                    }
+                }
+            });
+
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                gsap.to(card, {
+                    zIndex: -9999,
+                    opacity: 0.5,
+                    filter: 'blur(4px)',
+                    duration: 0.6
+                });
             });
         });
     }
 
-    attachEventListeners() {
-        this.cards.forEach(card => {
-            card.addEventListener('contextmenu', (e) => this.sendToBackground(card, e));
-            card.addEventListener('click', (e) => this.selectCard(card, e));
+    bringToFront(card) {
+        card.classList.add('active');
+        
+        let maxZ = 9999;
+        this.cards.forEach(c => {
+            if (c !== card) {
+                c.classList.remove('active');
+            }
+            const z = parseInt(window.getComputedStyle(c).zIndex) || 0;
+            if (z > maxZ) maxZ = z;
         });
 
+        gsap.killTweensOf(card);
+        gsap.set(card, {
+            zIndex: maxZ + 1,
+            opacity: 1,
+            filter: 'blur(0px)'
+        });
+    }
+
+    attachEventListeners() {
         const closeBtn = document.querySelector('.close-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
@@ -302,43 +267,6 @@ class Gallery {
                 document.querySelector('.instructions-overlay').classList.add('hidden');
             });
         }
-    }
-
-    selectCard(card, event) {
-        if (event.target.closest('.control-btn')) {
-            const btn = event.target.closest('.control-btn');
-            if (btn.title === 'Info') {
-                this.showInfo(card);
-            } else if (btn.title === 'Delete') {
-                this.deleteCard(card);
-            }
-            return;
-        }
-
-        // Remove active class from all other cards
-        this.cards.forEach(c => {
-            if (c !== card) {
-                c.classList.remove('active');
-            }
-        });
-
-        // Add active class to clicked card
-        card.classList.add('active');
-
-        // Find the highest current zIndex and add to it
-        let maxZ = 9999;
-        document.querySelectorAll('.project-card').forEach(c => {
-            const z = parseInt(gsap.getProperty(c, 'zIndex')) || 0;
-            if (z > maxZ) maxZ = z;
-        });
-
-        // Kill all tweens on this card and set blur to 0
-        gsap.killTweensOf(card);
-        gsap.set(card, {
-            filter: 'blur(0px)',
-            zIndex: maxZ + 1,
-            opacity: 1
-        });
     }
 
     showInfo(card) {
@@ -369,16 +297,6 @@ class Gallery {
             onComplete: () => {
                 card.remove();
             }
-        });
-    }
-
-    sendToBackground(card, event) {
-        event.preventDefault();
-        card.classList.remove('active');
-        gsap.to(card, {
-            zIndex: -9999,
-            duration: 0.8,
-            ease: 'power2.inOut'
         });
     }
 }
